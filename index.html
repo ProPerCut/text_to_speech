@@ -1,78 +1,201 @@
 <!DOCTYPE html>
-<html lang="bn">
+<html lang="en">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>AI Voice Generator</title>
+  <title>ElevenLabs Clone - AI Voice Generator</title>
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
   <style>
-    * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
-    body { background: #0f172a; color: #f8fafc; display: flex; justify-content: center; align-items: center; min-height: 100vh; padding: 20px; }
-    .container { background: #1e293b; padding: 30px; border-radius: 16px; box-shadow: 0 10px 25px rgba(0,0,0,0.5); width: 100%; max-width: 600px; }
-    h1 { font-size: 24px; margin-bottom: 20px; text-align: center; color: #38bdf8; }
-    textarea { width: 100%; height: 140px; background: #0f172a; border: 1px solid #334155; border-radius: 8px; padding: 12px; color: #fff; font-size: 16px; resize: none; margin-bottom: 20px; outline: none; }
-    textarea:focus { border-color: #38bdf8; }
-    .controls { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 20px; }
-    label { font-size: 14px; color: #94a3b8; display: block; margin-bottom: 6px; }
-    select, input { width: 100%; background: #0f172a; border: 1px solid #334155; color: #fff; padding: 10px; border-radius: 8px; outline: none; }
-    button { width: 100%; padding: 14px; background: #2563eb; color: #fff; border: none; border-radius: 8px; font-size: 16px; font-weight: bold; cursor: pointer; transition: 0.2s; }
-    button:hover { background: #1d4ed8; }
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; }
+    body { background-color: #f8fafc; color: #0f172a; display: flex; height: 100vh; overflow: hidden; }
+    
+    /* Sidebar */
+    .sidebar { width: 240px; background: #ffffff; border-right: 1px solid #e2e8f0; padding: 20px 12px; display: flex; flex-direction: column; justify-content: space-between; }
+    .logo { font-size: 18px; font-weight: 700; color: #0f172a; margin-bottom: 24px; padding-left: 8px; display: flex; align-items: center; gap: 8px; }
+    .menu-item { display: flex; align-items: center; gap: 12px; padding: 10px 12px; border-radius: 8px; color: #475569; text-decoration: none; font-size: 14px; margin-bottom: 4px; font-weight: 500; cursor: pointer; }
+    .menu-item.active, .menu-item:hover { background: #f1f5f9; color: #0284c7; }
+
+    /* Main Area */
+    .main-content { flex: 1; display: flex; flex-direction: column; overflow-y: auto; background: #fafafa; }
+    .top-nav { padding: 16px 32px; border-bottom: 1px solid #e2e8f0; background: #fff; display: flex; justify-content: space-between; align-items: center; }
+    .editor-container { padding: 32px; flex: 1; display: flex; flex-direction: column; gap: 16px; }
+    textarea { width: 100%; height: 220px; border: 1px solid #e2e8f0; border-radius: 12px; padding: 16px; font-size: 16px; outline: none; resize: none; background: #fff; box-shadow: 0 1px 2px rgba(0,0,0,0.05); }
+    
+    .action-bar { display: flex; justify-content: space-between; align-items: center; }
+    .btn-generate { background: #0284c7; color: white; border: none; padding: 12px 24px; border-radius: 8px; font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 8px; font-size: 15px; }
+    .btn-generate:hover { background: #0369a1; }
+
+    /* Right Control Panel */
+    .control-panel { width: 340px; background: #ffffff; border-left: 1px solid #e2e8f0; padding: 20px; overflow-y: auto; display: flex; flex-direction: column; gap: 20px; }
+    .panel-title { font-size: 14px; font-weight: 600; color: #64748b; text-transform: uppercase; letter-spacing: 0.5px; }
+    .voice-card { border: 1px solid #e2e8f0; border-radius: 10px; padding: 12px; cursor: pointer; background: #fff; display: flex; justify-content: space-between; align-items: center; }
+    .voice-card:hover { border-color: #0284c7; }
+    .slider-group { display: flex; flex-direction: column; gap: 6px; }
+    .slider-label { font-size: 13px; font-weight: 500; color: #334155; display: flex; justify-content: space-between; }
+    input[type=range] { width: 100%; accent-color: #0284c7; }
+
+    /* Voice Modal */
+    .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.4); justify-content: center; align-items: center; z-index: 100; }
+    .modal-content { background: #fff; width: 650px; border-radius: 12px; max-height: 80vh; display: flex; flex-direction: column; padding: 20px; }
+    .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
+    .filter-bar { display: flex; gap: 8px; margin-bottom: 16px; flex-wrap: wrap; }
+    .filter-btn { padding: 6px 12px; border: 1px solid #cbd5e1; border-radius: 20px; background: #fff; font-size: 12px; cursor: pointer; }
+    .filter-btn.active { background: #0284c7; color: #fff; border-color: #0284c7; }
+    .voice-list { overflow-y: auto; display: flex; flex-direction: column; gap: 10px; flex: 1; }
+    .voice-item { display: flex; align-items: center; justify-content: space-between; padding: 12px; border: 1px solid #f1f5f9; border-radius: 8px; }
+    .voice-item:hover { background: #f8fafc; }
   </style>
 </head>
 <body>
 
-  <div class="container">
-    <h1>AI Voice Generator</h1>
-    <textarea id="text-input" placeholder="এখানে আপনার লেখাটি টাইপ বা পেস্ট করুন..."></textarea>
+  <!-- Sidebar -->
+  <div class="sidebar">
+    <div>
+      <div class="logo"><i class="fa-solid fa-waveform"></i> ElevenLabs</div>
+      <a class="menu-item active"><i class="fa-solid fa-comment-dots"></i> Text to Speech</a>
+      <a class="menu-item"><i class="fa-solid fa-microphone-lines"></i> Voice Cloning</a>
+      <a class="menu-item"><i class="fa-solid fa-wand-magic-sparkles"></i> Sound Effects</a>
+      <a class="menu-item"><i class="fa-solid fa-music"></i> Music Generator</a>
+    </div>
+  </div>
+
+  <!-- Main Content -->
+  <div class="main-content">
+    <div class="top-nav">
+      <h3>Speech Synthesis</h3>
+      <div><i class="fa-solid fa-clock-rotate-left"></i> History</div>
+    </div>
     
-    <div class="controls">
-      <div>
-        <label for="voice-select">ভয়েস ক্যারেক্টার বেছে নিন:</label>
-        <select id="voice-select"></select>
+    <div class="editor-container">
+      <textarea id="text-input" placeholder="Start typing here or paste any text you want to turn into speech..."></textarea>
+      
+      <div class="action-bar">
+        <span id="char-count" style="color: #94a3b8; font-size: 14px;">0 / 5000 characters</span>
+        <div style="display: flex; gap: 10px;">
+          <button class="btn-generate" id="speak-btn"><i class="fa-solid fa-play"></i> Generate Speech</button>
+          <a id="download-btn" style="display:none;" class="btn-generate" download="voice.mp3"><i class="fa-solid fa-download"></i> Download</a>
+        </div>
       </div>
-      <div>
-        <label for="rate">স্পিড:</label>
-        <input type="range" id="rate" min="0.5" max="2" value="1" step="0.1">
+    </div>
+  </div>
+
+  <!-- Right Settings Panel -->
+  <div class="control-panel">
+    <div class="panel-title">Settings</div>
+    
+    <div>
+      <label class="slider-label" style="margin-bottom:6px;">VOICE</label>
+      <div class="voice-card" id="open-voice-modal">
+        <div>
+          <strong id="selected-voice-name">Select Voice Character</strong>
+          <p id="selected-voice-desc" style="font-size: 12px; color: #64748b;">Click to choose from library</p>
+        </div>
+        <i class="fa-solid fa-chevron-right"></i>
       </div>
     </div>
 
-    <button id="speak-btn">ভয়েস শুনুন 🔊</button>
+    <div class="slider-group">
+      <div class="slider-label"><span>Speed</span><span id="speed-val">1.0x</span></div>
+      <input type="range" id="rate" min="0.5" max="2" value="1" step="0.1">
+    </div>
+
+    <div class="slider-group">
+      <div class="slider-label"><span>Stability</span><span id="stab-val">50%</span></div>
+      <input type="range" id="stability" min="0" max="100" value="50">
+    </div>
+
+    <div class="slider-group">
+      <div class="slider-label"><span>Clarity / Similarity</span><span id="sim-val">75%</span></div>
+      <input type="range" id="similarity" min="0" max="100" value="75">
+    </div>
+  </div>
+
+  <!-- Voice Selector Modal -->
+  <div class="modal" id="voice-modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3>Voice Library</h3>
+        <i class="fa-solid fa-xmark" id="close-modal" style="cursor:pointer;"></i>
+      </div>
+      
+      <div class="filter-bar">
+        <button class="filter-btn active" data-filter="all">All</button>
+        <button class="filter-btn" data-filter="bn">Bengali</button>
+        <button class="filter-btn" data-filter="en">English</button>
+        <button class="filter-btn" data-filter="hi">Hindi</button>
+        <button class="filter-btn" data-filter="narration">Storytelling</button>
+        <button class="filter-btn" data-filter="podcast">Podcast</button>
+      </div>
+
+      <div class="voice-list" id="voice-list"></div>
+    </div>
   </div>
 
   <script>
     const synth = window.speechSynthesis;
-    const textInput = document.getElementById('text-input');
-    const voiceSelect = document.getElementById('voice-select');
-    const speakBtn = document.getElementById('speak-btn');
     let voices = [];
+    
+    const textInput = document.getElementById('text-input');
+    const speakBtn = document.getElementById('speak-btn');
+    const modal = document.getElementById('voice-modal');
+    const openModalBtn = document.getElementById('open-voice-modal');
+    const closeModalBtn = document.getElementById('close-modal');
+    const voiceList = document.getElementById('voice-list');
+    
+    let selectedVoiceObj = null;
 
-    function populateVoiceList() {
+    // Load Browser Voices
+    function loadVoices() {
       voices = synth.getVoices();
-      voiceSelect.innerHTML = '';
-      voices.forEach((voice, index) => {
-        const option = document.createElement('option');
-        option.textContent = `${voice.name} (${voice.lang})`;
-        option.setAttribute('data-name', voice.name);
-        voiceSelect.appendChild(option);
+      voiceList.innerHTML = '';
+      
+      voices.forEach((voice) => {
+        const item = document.createElement('div');
+        item.className = 'voice-item';
+        item.innerHTML = `
+          <div>
+            <strong>${voice.name}</strong>
+            <p style="font-size:12px; color:#64748b;">Lang: ${voice.lang}</p>
+          </div>
+          <button class="filter-btn" style="background:#0284c7; color:#fff;">Select</button>
+        `;
+        item.onclick = () => {
+          selectedVoiceObj = voice;
+          document.getElementById('selected-voice-name').innerText = voice.name;
+          document.getElementById('selected-voice-desc').innerText = `Language: ${voice.lang}`;
+          modal.style.display = 'none';
+        };
+        voiceList.appendChild(item);
       });
     }
 
-    populateVoiceList();
-    if (speechSynthesis.onvoiceschanged !== undefined) {
-      speechSynthesis.onvoiceschanged = populateVoiceList;
-    }
+    populateVoices = () => {
+      loadVoices();
+      if (speechSynthesis.onvoiceschanged !== undefined) {
+        speechSynthesis.onvoiceschanged = loadVoices;
+      }
+    };
+    populateVoices();
 
-    speakBtn.addEventListener('click', () => {
+    // Modal Events
+    openModalBtn.onclick = () => modal.style.display = 'flex';
+    closeModalBtn.onclick = () => modal.style.display = 'none';
+
+    // Text to Speech Action
+    speakBtn.onclick = () => {
       if (synth.speaking) synth.cancel();
       if (textInput.value !== '') {
-        const speakText = new SpeechSynthesisUtterance(textInput.value);
-        const selectedVoice = voiceSelect.selectedOptions[0].getAttribute('data-name');
-        voices.forEach(voice => {
-          if (voice.name === selectedVoice) speakText.voice = voice;
-        });
-        speakText.rate = document.getElementById('rate').value;
-        synth.speak(speakText);
+        const utterThis = new SpeechSynthesisUtterance(textInput.value);
+        if(selectedVoiceObj) utterThis.voice = selectedVoiceObj;
+        utterThis.rate = document.getElementById('rate').value;
+        synth.speak(utterThis);
       }
-    });
+    };
+
+    // UI Sliders Link
+    document.getElementById('rate').oninput = (e) => document.getElementById('speed-val').innerText = e.target.value + 'x';
+    document.getElementById('stability').oninput = (e) => document.getElementById('stab-val').innerText = e.target.value + '%';
+    document.getElementById('similarity').oninput = (e) => document.getElementById('sim-val').innerText = e.target.value + '%';
   </script>
 </body>
 </html>
