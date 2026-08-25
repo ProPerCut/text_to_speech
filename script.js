@@ -33,6 +33,9 @@ speakBtn.onclick = async () => {
     return;
   }
 
+  const stabilityVal = document.getElementById('stability').value / 100;
+  const similarityVal = document.getElementById('similarity').value / 100;
+
   speakBtn.disabled = true;
   speakBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Generating...';
 
@@ -40,11 +43,18 @@ speakBtn.onclick = async () => {
     const response = await fetch('/api/generate-voice', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ text: text, voiceId: selectedVoiceId })
+      body: JSON.stringify({ 
+        text: text, 
+        voiceId: selectedVoiceId,
+        stability: stabilityVal,
+        similarity: similarityVal
+      })
     });
 
+    const data = await response.clone().json().catch(() => null);
+
     if (!response.ok) {
-      throw new Error('Failed to generate audio. Check API Key.');
+      throw new Error(data?.error || 'Failed to generate audio. Check API Key.');
     }
 
     const blob = await response.blob();
@@ -67,9 +77,9 @@ speakBtn.onclick = async () => {
 };
 
 // Menu Tab Switcher
-function switchTab(tab) {
+function switchTab(tab, element) {
   document.querySelectorAll('.menu-item').forEach(el => el.classList.remove('active'));
-  event.currentTarget.classList.add('active');
+  if (element) element.classList.add('active');
 
   const ttsSection = document.getElementById('section-tts');
   const otherSection = document.getElementById('section-other');
@@ -90,6 +100,9 @@ function switchTab(tab) {
 }
 
 // Slider Display Updates
-document.getElementById('rate').oninput = (e) => document.getElementById('speed-val').innerText = e.target.value + 'x';
+document.getElementById('rate').oninput = (e) => {
+  document.getElementById('speed-val').innerText = e.target.value + 'x';
+  audioPlayer.playbackRate = parseFloat(e.target.value);
+};
 document.getElementById('stability').oninput = (e) => document.getElementById('stab-val').innerText = e.target.value + '%';
 document.getElementById('similarity').oninput = (e) => document.getElementById('sim-val').innerText = e.target.value + '%';
