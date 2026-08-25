@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AI Voice Generator</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+    body { background: #0f172a; color: #f8fafc; display: flex; justify-content: center; align-items: center; min-height: 100vh; padding: 20px; }
+    .container { background: #1e293b; padding: 30px; border-radius: 16px; box-shadow: 0 10px 25px rgba(0,0,0,0.5); width: 100%; max-width: 600px; }
+    h1 { font-size: 24px; margin-bottom: 20px; text-align: center; color: #38bdf8; }
+    textarea { width: 100%; height: 140px; background: #0f172a; border: 1px solid #334155; border-radius: 8px; padding: 12px; color: #fff; font-size: 16px; resize: none; margin-bottom: 20px; outline: none; }
+    textarea:focus { border-color: #38bdf8; }
+    .controls { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 20px; }
+    label { font-size: 14px; color: #94a3b8; display: block; margin-bottom: 6px; }
+    select, input { width: 100%; background: #0f172a; border: 1px solid #334155; color: #fff; padding: 10px; border-radius: 8px; outline: none; }
+    button { width: 100%; padding: 14px; background: #2563eb; color: #fff; border: none; border-radius: 8px; font-size: 16px; font-weight: bold; cursor: pointer; transition: 0.2s; }
+    button:hover { background: #1d4ed8; }
+  </style>
+</head>
+<body>
+
+  <div class="container">
+    <h1>AI Voice Generator</h1>
+    <textarea id="text-input" placeholder="এখানে আপনার লেখাটি টাইপ বা পেস্ট করুন..."></textarea>
+    
+    <div class="controls">
+      <div>
+        <label for="voice-select">ভয়েস ক্যারেক্টার বেছে নিন:</label>
+        <select id="voice-select"></select>
+      </div>
+      <div>
+        <label for="rate">স্পিড:</label>
+        <input type="range" id="rate" min="0.5" max="2" value="1" step="0.1">
+      </div>
+    </div>
+
+    <button id="speak-btn">ভয়েস শুনুন 🔊</button>
+  </div>
+
+  <script>
+    const synth = window.speechSynthesis;
+    const textInput = document.getElementById('text-input');
+    const voiceSelect = document.getElementById('voice-select');
+    const speakBtn = document.getElementById('speak-btn');
+    let voices = [];
+
+    function populateVoiceList() {
+      voices = synth.getVoices();
+      voiceSelect.innerHTML = '';
+      voices.forEach((voice, index) => {
+        const option = document.createElement('option');
+        option.textContent = `${voice.name} (${voice.lang})`;
+        option.setAttribute('data-name', voice.name);
+        voiceSelect.appendChild(option);
+      });
+    }
+
+    populateVoiceList();
+    if (speechSynthesis.onvoiceschanged !== undefined) {
+      speechSynthesis.onvoiceschanged = populateVoiceList;
+    }
+
+    speakBtn.addEventListener('click', () => {
+      if (synth.speaking) synth.cancel();
+      if (textInput.value !== '') {
+        const speakText = new SpeechSynthesisUtterance(textInput.value);
+        const selectedVoice = voiceSelect.selectedOptions[0].getAttribute('data-name');
+        voices.forEach(voice => {
+          if (voice.name === selectedVoice) speakText.voice = voice;
+        });
+        speakText.rate = document.getElementById('rate').value;
+        synth.speak(speakText);
+      }
+    });
+  </script>
+</body>
+</html>
